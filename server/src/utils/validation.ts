@@ -1,8 +1,8 @@
-import { IValidationResponse, email, uuid, typeName } from "../interface/interfaces";
+import { IValidationResponse, uuid, typeName } from "../interface/interfaces";
 import { validate as uuidValidate } from 'uuid';
 
 export class RequestBodyValidator{
-    private validateField(value:string | undefined, pattern:RegExp, emptyFieldMessage:string, invalidDataMessage:string): IValidationResponse{
+    private validateField(value:string | undefined, pattern:RegExp | null, emptyFieldMessage:string, invalidDataMessage:string): IValidationResponse{
         const response: IValidationResponse = {
             isValid: true,
             message: null
@@ -17,10 +17,13 @@ export class RequestBodyValidator{
             response.isValid = false;
             response.message = 'The data must be of type string.';
         }
-        if(!pattern.test(value)){
-            response.isValid = false;
-            response.message = invalidDataMessage;
-            return response;
+
+        if(pattern){
+            if(!pattern.test(value)){
+                response.isValid = false;
+                response.message = invalidDataMessage;
+                return response;
+            }
         }
 
         return response;
@@ -36,13 +39,43 @@ export class RequestBodyValidator{
         );
     }
 
+    public validateHaveInformation(information: string, entityName: string): IValidationResponse{
+        const response: IValidationResponse = {
+            isValid: true,
+            message: null
+        };
+
+        if(!information){
+            response.isValid = false;
+            response.message = `Invalid Data. ${entityName} has not been defined.`;
+            return response;
+        }
+
+        return response;
+    }
+
+    public validateAdminToken(token: string): IValidationResponse{
+        const response: IValidationResponse = {
+            isValid: true,
+            message: null
+        };
+
+        if(!token){
+            response.isValid = false,
+            response.message = `Verification token not added`;
+            return response;
+        }
+
+        return response;
+    }
+
     public validateUUID(ID: uuid, entityName: string): IValidationResponse{
         const response: IValidationResponse = {
             isValid: true,
             message: null
         };
 
-        if(ID && !uuidValidate(ID)){
+        if(!ID || !uuidValidate(ID)){
             response.isValid = false;
             response.message = `Invalid ID. ${entityName} ID must be UUID type.`;
             return response;

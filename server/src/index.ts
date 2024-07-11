@@ -1,5 +1,6 @@
 import express from "express";
 import cors from 'cors';
+import appRouter from './routes';
 import config from './config/config';
 import { InitializeServer } from "./utils/initializeServer";
 
@@ -13,6 +14,7 @@ server.use(cors({
     credentials: true
 }));
 server.use(express.json());
+server.use(appRouter);
 
 const app = server.listen(PORT, async () => {
     InitializeServer(app);

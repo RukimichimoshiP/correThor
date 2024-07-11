@@ -1,5 +1,4 @@
 export type uuid = string;
-export type email = string;
 export type typeName = 'name'
 export type validationFunction = () => IValidationResponse;
 
@@ -19,7 +18,7 @@ export interface ICorrection{
     student: string;
 }
 
-export interface corrector{
+export interface ICorrector{
     id: uuid;
     name: string;
 }
@@ -38,7 +37,18 @@ export interface IAPIResponse<T>{
 }
 
 export interface ILoginTokenPayload{
-    userID: uuid;
+    adminID: uuid;
+}
+
+export interface ICookieOptions {
+    name: string,
+    val: uuid,
+    options: {
+        maxAge: number,
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: true
+    }
 }
 
 declare module 'express-serve-static-core'{

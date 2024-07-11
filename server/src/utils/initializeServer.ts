@@ -33,9 +33,7 @@ export const InitializeServer = async (app: Server): Promise<void> => {
         );
     }
 
-    const testConnectionDB = await db.query(
-        'SELECT * FROM users', []
-    );
+    const testConnectionDB = await db.query('SELECT * FROM admin', []);
     if(testConnectionDB){
         console.info(
             `[${amb}][${dbMessage}] Database connected - ${chalk.gray(new Date())}`

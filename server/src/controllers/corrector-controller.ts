@@ -38,7 +38,7 @@ export default class CorrectorController{
 
     static async updateCorrector(req: Request, res: Response): Promise<void>{
         try {
-            const correctorID = req.params.correctorID;
+            const correctorID = req.params.id;
             const correctorName = req.body.name;
 
             const correctorInfo: ICorrector = {name: correctorName, id: correctorID};
@@ -60,7 +60,7 @@ export default class CorrectorController{
 
     static async deleteCorrector(req: Request, res: Response): Promise<void>{
         try {
-            const correctorID = req.params.correctorID;
+            const correctorID = req.params.id;
 
             const deletedCorrector = await CorrectorService.deleteCorrector(correctorID);
             const response = createResponse(true, deletedCorrector, null);

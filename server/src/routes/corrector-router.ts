@@ -9,7 +9,7 @@ const correctorRouter: Router = Router();
 correctorRouter.use(AdminMiddleware.authorization);
 correctorRouter.get('/correctors', CorrectorController.getAllCorrectors);
 correctorRouter.post('/correctors', CorrectorMiddleware.ValidateRequestBodyCorrector, CorrectorController.createNewCorrector);
-correctorRouter.put('/correctors/:correctorID', CorrectionMiddleware.validateParamsToGetCorrection, CorrectorMiddleware.ValidateRequestBodyCorrector, CorrectorController.updateCorrector);
-correctorRouter.delete('/correctors/:correctorID', CorrectionMiddleware.validateParamsToGetCorrection, CorrectorController.deleteCorrector);
+correctorRouter.put('/correctors/:id', CorrectionMiddleware.validateParamsToGetCorrection, CorrectorMiddleware.ValidateRequestBodyCorrector, CorrectorController.updateCorrector);
+correctorRouter.delete('/correctors/:id', CorrectionMiddleware.validateParamsToGetCorrection, CorrectorController.deleteCorrector);
 
 export default correctorRouter;

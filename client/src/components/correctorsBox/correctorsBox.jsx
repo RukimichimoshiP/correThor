@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useToken } from "../../contexts/tokenContext";
+import { useCorrectorId } from '../../contexts/correctorIdContext';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
@@ -22,44 +23,26 @@ import DialogContentText from '@mui/material/DialogContentText';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import DialogTitle from '@mui/material/DialogTitle';
-import { getAllCorrectors, createNewCorrector } from "../../utils/fetchAPI";
+import { getAllCorrectors, createNewCorrector, editCorrector, deleteCorrector } from "../../utils/fetchAPI";
 
 const CorrectorsBox = () => {
     const [error, setError] = React.useState(null);
     const [loading, setLoading] = React.useState(false);
+    const [loadingDialog, setLoadingDialog] = React.useState(false);
     const [statusResponse, setStatusResponse] = React.useState(null);
     const [dialog, setDialog] = React.useState(false);
     const [dialogEdit, setDialogEdit] = React.useState(false);
+    const [dialogDelete, setDialogDelete] = React.useState(false);
     const [valueCorrector, setValueCorrector] = React.useState('');
+    const [valueCorrectorEdit, setValueCorrectorEdit] = React.useState('');
     const [newCorrector, setNewCorrector] = React.useState('');
 
     const { token } = useToken();
+    const { setCorrectorId } = useCorrectorId();
 
     async function getCorrectors(){
-        const response = await getAllCorrectors('NpKbTSKaBv9NHhGcsPViHOwT4KryGgAj');
+        const response = await getAllCorrectors(token);
         setStatusResponse(response.data);
-    }
-
-    async function handleSave(){
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await createNewCorrector('NpKbTSKaBv9NHhGcsPViHOwT4KryGgAj', newCorrector);
-            if(response.success){
-                setError(null);
-                
-                const newCorrector = response.data;
-                setValueCorrector(newCorrector);
-                setDialog(false);
-                setNewCorrector('');
-                getCorrectors();
-            }          
-        } catch (error) {
-            setError(error);
-        }finally{
-            setLoading(false);
-        }
     }
 
     useEffect( () => {
@@ -67,8 +50,30 @@ const CorrectorsBox = () => {
         setLoading(false);
     }, []);
 
+    async function handleSave(){
+        setLoadingDialog(true);
+        setError(null);
+
+        const response = await createNewCorrector(token, newCorrector);
+        if(response.success){
+            setError(null);
+            
+            const newCorrector = response.data;
+            setValueCorrector(newCorrector.id);
+            setCorrectorId(newCorrector.id);
+            setDialog(false);
+            setNewCorrector('');
+            getCorrectors();
+        }else{
+            setError(JSON.stringify({error: response.error, message: response.messages}));
+        }
+
+        setLoadingDialog(false);
+    }
+
     const handleChange = (event) => {
         setValueCorrector(event.target.value);
+        setCorrectorId(event.target.value);
       };
 
       const handleClickOpen = () => {
@@ -77,11 +82,35 @@ const CorrectorsBox = () => {
     
       const handleClose = () => {
         setDialog(false);
+        setNewCorrector('');
         setError(null);
       };
 
+      const handleSaveEdit = async () => {
+        setLoadingDialog(true);
+        setError(null);
+
+        const response = await editCorrector(token, valueCorrector, valueCorrectorEdit);
+        if(response.success){
+            setError(null);
+
+            setDialogEdit(false);
+            setCorrectorId(valueCorrector);
+            setValueCorrectorEdit('');
+            getCorrectors();
+        }else{
+            setError(JSON.stringify({error: response.error, message: response.messages}));
+        }
+
+        setLoadingDialog(false);
+      }
+
       const handleClickOpenEdit = () => {
         setDialogEdit(true);
+        const selectedCorrector = statusResponse.find(corrector => corrector.id === valueCorrector);
+        if(selectedCorrector){
+            setValueCorrectorEdit(selectedCorrector.name);
+        }
       };
     
       const handleCloseEdit = () => {
@@ -89,7 +118,37 @@ const CorrectorsBox = () => {
         setError(null);
       };
 
-      console.log(valueCorrector);
+      const handleDelete = async () => {
+        setLoadingDialog(true);
+        console.log(valueCorrector)
+        const response = await deleteCorrector(token, valueCorrector);
+
+        if(response.success){
+            setError(null);
+
+            setDialogDelete(false);
+            setValueCorrector('');
+            setCorrectorId();
+            getCorrectors();
+        }else{
+            setError(JSON.stringify({error: response.error, message: response.messages}));
+        }
+
+        setLoadingDialog(false);
+      }
+
+      const handleClickOpenDelete = () => {
+        setDialogDelete(true);
+        const selectedCorrector = statusResponse.find(corrector => corrector.id === valueCorrector);
+        if(selectedCorrector){
+            setValueCorrectorEdit(selectedCorrector.name);
+        }
+      };
+    
+      const handleCloseDelete = () => {
+        setDialogDelete(false);
+        setError(null);
+      };
 
     return(
         <Card sx={{ 
@@ -125,7 +184,6 @@ const CorrectorsBox = () => {
                         labelId="demo-simple-select-filled-label"
                         id="demo-simple-select-filled"
                         value={valueCorrector}
-                        defaultValue={newCorrector.id}
                         onChange={handleChange}
                         >
                         <MenuItem value="">
@@ -133,7 +191,7 @@ const CorrectorsBox = () => {
                         </MenuItem>
                         {statusResponse && 
                             statusResponse.map(corrector => (
-                            <MenuItem value={corrector.id}>{corrector.name}</MenuItem>
+                            <MenuItem value={corrector.id} >{corrector.name}</MenuItem>
                         ))}
                         </Select>
                     </FormControl>
@@ -143,7 +201,7 @@ const CorrectorsBox = () => {
                             <Button variant="outlined" startIcon={<EditIcon />} sx={{ m: 1, width: 300, maxWidth: 350 }} onClick={handleClickOpenEdit}>
                                 EDITAR CORRETOR
                             </Button>
-                            <Button variant="outlined" startIcon={<DeleteIcon />} sx={{ m: 1, width: 300, maxWidth: 350 }}>
+                            <Button variant="outlined" startIcon={<DeleteIcon />} color='error' sx={{ m: 1, width: 300, maxWidth: 350 }} onClick={handleClickOpenDelete}>
                                 DELETAR CORRETOR
                             </Button>
                         </>
@@ -158,87 +216,126 @@ const CorrectorsBox = () => {
                         </>
                     }
 
-                    <Dialog open={dialog} onClose={handleClose} fullWidth>
-                        <DialogTitle>Adicionar corretor</DialogTitle>
-                        <DialogContent>
-                            <TextField
-                                autoFocus
-                                required
-                                margin="dense"
-                                id="name"
-                                name="Name"
-                                label="Name"
-                                type="text"
-                                fullWidth
-                                variant="standard"
-                                value={newCorrector}
-                                onChange={(e) => setNewCorrector(e.target.value)}
-                            />
-                            {error && (
-                                <Stack sx={{ width: '100%' }} spacing={2}>
-                                    <Alert severity="error">
-                                        <AlertTitle>Erro de submissão</AlertTitle>
-                                        {error}
-                                    </Alert>
-                                </Stack>
-                            )}
-                        </DialogContent>
-                        <DialogActions>
-                            {loading ? (
-                                <Box sx={{ display: 'flex' }}>
-                                    <CircularProgress />
-                                </Box>
-                            ) : (
-                                <>
-                                    <Button onClick={handleClose}>Cancelar</Button>
-                                    <Button variant="contained" type="submit" onClick={handleSave}>Salvar</Button>
-                                </>
-                            )}
-                        </DialogActions>
-                    </Dialog>
-
-                    <Dialog open={dialogEdit} onClose={handleCloseEdit} fullWidth>
-                        <DialogTitle>Editar corretor</DialogTitle>
-                        <DialogContent>
-                            <TextField
-                                autoFocus
-                                required
-                                margin="dense"
-                                id="name"
-                                name="Name"
-                                label="Name"
-                                type="text"
-                                fullWidth
-                                defaultValue={valueCorrector}
-                                variant="standard"
-                                onChange={(e) => setNewCorrector(e.target.value)}
-                            />
-                            {error && (
-                                <Stack sx={{ width: '100%' }} spacing={2}>
-                                    <Alert severity="error">
-                                        <AlertTitle>Erro de submissão</AlertTitle>
-                                        {error}
-                                    </Alert>
-                                </Stack>
-                            )}
-                        </DialogContent>
-                        <DialogActions>
-                            {loading ? (
-                                <Box sx={{ display: 'flex' }}>
-                                    <CircularProgress />
-                                </Box>
-                            ) : (
-                                <>
-                                    <Button onClick={handleCloseEdit}>Cancelar</Button>
-                                    <Button variant="contained" type="submit" onClick={handleSave}>Salvar</Button>
-                                </>
-                            )}
-                        </DialogActions>
-                    </Dialog>
-
                 </Stack>
         </>
         }
+
+            <Dialog open={dialog} onClose={handleClose} fullWidth>
+                    <DialogTitle>Adicionar corretor</DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            autoFocus
+                            required
+                            margin="dense"
+                            id="name"
+                            name="Name"
+                            label="Name"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            value={newCorrector}
+                            onChange={(e) => setNewCorrector(e.target.value)}
+                        />
+                        {error && (
+                            <Stack sx={{ width: '100%' }} spacing={2}>
+                                <Alert severity="error">
+                                    <AlertTitle>Erro de submissão</AlertTitle>
+                                    {error}
+                                </Alert>
+                            </Stack>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        {loadingDialog ? (
+                            <Box sx={{ display: 'flex' }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            <>
+                                <Button onClick={handleClose}>Cancelar</Button>
+                                <Button variant="contained" type="submit" onClick={handleSave}>Salvar</Button>
+                            </>
+                        )}
+                    </DialogActions>
+                </Dialog>
+
+                <Dialog open={dialogEdit} onClose={handleCloseEdit} fullWidth>
+                    <DialogTitle>Editar corretor</DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            autoFocus
+                            required
+                            margin="dense"
+                            id="name"
+                            name="Name"
+                            label="Name"
+                            type="text"
+                            fullWidth
+                            defaultValue={valueCorrectorEdit}
+                            variant="standard"
+                            onChange={(e) => setValueCorrectorEdit(e.target.value)}
+                        />
+                        {error && (
+                            <Stack sx={{ width: '100%' }} spacing={2}>
+                                <Alert severity="error">
+                                    <AlertTitle>Erro de submissão</AlertTitle>
+                                    {error}
+                                </Alert>
+                            </Stack>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        {loading ? (
+                            <Box sx={{ display: 'flex' }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            <>
+                                <Button onClick={handleCloseEdit}>Cancelar</Button>
+                                <Button variant="contained" type="submit" onClick={handleSaveEdit}>Salvar</Button>
+                            </>
+                        )}
+                    </DialogActions>
+                </Dialog>
+
+                <Dialog
+                    open={dialogDelete}
+                    onClose={handleCloseDelete}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                    fullWidth
+                >
+                    <DialogTitle id="alert-dialog-title">
+                    {"Deletar Corretor"}
+                    </DialogTitle>
+                    <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Esta ação é irreversivel
+                    </DialogContentText>
+                    </DialogContent>
+                    {error && 
+                        <Stack sx={{ width: '100%' }} spacing={2}>
+                        <Alert severity="error">
+                            <AlertTitle>Erro de submissão</AlertTitle>
+                            {error}
+                        </Alert>
+                        </Stack>
+                    }
+                    <DialogActions>
+                        {loadingDialog ?
+                            <Box sx={{ display: 'flex' }}>
+                                <CircularProgress />
+                            </Box>
+                            :
+                            <>
+                            <Button onClick={handleCloseDelete}>Cancelar</Button>
+                            <Button variant="contained" color="error" onClick={handleDelete} autoFocus>
+                                Confimar
+                            </Button>
+                            </>
+                        }
+                    </DialogActions>
+                </Dialog>
 
         </CardContent>
       </Card>

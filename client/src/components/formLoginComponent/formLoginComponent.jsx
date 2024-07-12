@@ -30,6 +30,7 @@ const Item = styled(Paper)(({ theme }) => ({
 const FormLogin = () => {
     const [error, setError] = React.useState(null);
     const [loading, setLoading] = React.useState(false);
+    const [statusResponse, setStatusResponse] = React.useState(false);
     const [inputToken, setInputToken] = React.useState('');
 
     const { token, setToken } = useToken();
@@ -39,13 +40,12 @@ const FormLogin = () => {
 
         const response = await adminLogin(inputToken);
         if(!response.success){
-            setError(response.error);
+            setError(JSON.stringify({error: response.error, message: response.messages}));
         }else{
             setError(null);
-            setToken(response.data);
+            setToken(response.data.token);
+            setStatusResponse(response.data);
         }
-
-        console.log(response);
 
         setLoading(false);
     }
@@ -70,9 +70,10 @@ const FormLogin = () => {
                 divider={<Divider orientation="vertical" flexItem />}
                 spacing={2}
             >
-                <Item sx={{display: 'flex', gap: 1, alignItems: 'center', background: 'lightgray'}}><AccountCircleIcon />{token.name}</Item>
+                <Item sx={{display: 'flex', gap: 1, alignItems: 'center', background: 'lightgray'}}><AccountCircleIcon />{statusResponse.name}</Item>
                 <Button variant="contained" onClick={() => {
                     setToken(null);
+                    setStatusResponse(null);
                     setInputToken(null);
                     }} sx={{display: 'flex', gap: 1, alignItems: 'center', color: 'blue', background: 'white'}}><SettingsIcon /> TOKEN</Button>
             </Stack>

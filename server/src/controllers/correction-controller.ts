@@ -12,13 +12,14 @@ export default class CorrectionController{
             const response = createResponse(true, corrections, null);
             res.status(200).json(response);
         } catch (err: any) {
-            const response: IAPIResponse<null> = createResponse(false, null, 'Internal server Error');
+            const response: IAPIResponse<null> = createResponse(false, null, 'Internal server error.');
+
             if(err instanceof NotFoundError){
                 response.error = err.message;
                 res.status(err.code).json(response);
+            }else{
+                res.status(500).json(response);
             }
-
-            res.status(500).json(response);
         }
     }
 
@@ -60,7 +61,7 @@ export default class CorrectionController{
 
     static async updateCorrection(req: Request, res: Response): Promise<void>{
         try {
-            if(req.body.correctionID){
+            if(req.body.id){
                 throw new ConflictError('Controller Layer', 'It is not possible to modify the correction corrector');
             }
 

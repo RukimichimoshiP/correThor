@@ -6,9 +6,9 @@ import CorrectionRepository from "../repositories/correction-repository";
 export default class CorrectionService{
     static async getCorrectionByCorrectorId(correctorId: uuid): Promise<Array<ICorrection | null>>{
 
-        const correctorExist = await CorrectorRepository.getCorrectorById(correctorId);
-        if(!correctorExist){
-            throw new NotFoundError('Correction Service', 'Corrector');
+        const correctorIdExist = await CorrectorRepository.getCorrectorById(correctorId);
+        if(!correctorIdExist){
+            throw new NotFoundError('Service layer', 'Corrector');
         }
 
         const corrections =  await CorrectionRepository.getCorrectionByCorrectorId(correctorId);
@@ -36,7 +36,6 @@ export default class CorrectionService{
 
     static async deleteCorrection(correctionID: uuid): Promise<ICorrection>{
         const correctionExist = await CorrectionRepository.getCorrectionById(correctionID);
-        console.log(correctionExist);
         if(!correctionExist){
             throw new NotFoundError('Service Layer', 'Correction');
         }
@@ -46,6 +45,14 @@ export default class CorrectionService{
     }
 
     static async updateCorrection(correctionInfos: Partial<ICorrection>, correctionID: uuid): Promise<ICorrection>{
+        
+        const correctionObject = {
+            ...(correctionInfos.class && { class: correctionInfos.class }),
+            ...(correctionInfos.module && { module: correctionInfos.module }),
+            ...(correctionInfos.meeting && { meeting: correctionInfos.meeting }),
+            ...(correctionInfos.student && { student: correctionInfos.student }),
+        };
+
         const correctionExist = await CorrectionRepository.getCorrectionById(correctionID);
         if(!correctionExist){
             throw new NotFoundError('Service Layer', 'Correction');
@@ -53,7 +60,7 @@ export default class CorrectionService{
 
         const updatedCorrection: ICorrection = {
             ...correctionExist,
-            ...correctionInfos
+            ...correctionObject
         }
 
         const updatedCorrectionData = await CorrectionRepository.updateCorrection(updatedCorrection);
